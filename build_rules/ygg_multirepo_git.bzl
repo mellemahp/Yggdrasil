@@ -1,7 +1,6 @@
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-load(":ygg.bzl", "LOCAL_REPOS")
-
-def ygg_git_deps(repos, default_branch):
+    
+def ygg_git_deps(package_overrides, repos, default_branch):
     """
     Get all git repos that you plan to manage with ygg
 
@@ -26,15 +25,19 @@ def ygg_git_deps(repos, default_branch):
     """
     for repo in repos: 
         repo_name = repo['repo_name']
-        branch = LOCAL_REPOS.get(
-            repo_name.capitalize(),
-            default=default_branch
-        )
-        
-        print(f"Generating Git repo for {repo_name} using branch {branch}")
+        branch = package_overrides.get(repo_name, default=default_branch)
 
-        git_repository(
-            name=repo['name'], 
-            remote=repo['remote'],
-            branch=branch
-        )
+        if branch == "local": 
+            print("Using local version of package {}".format(repo_name, branch))
+            path = "../{}/".format(repo['repo_name'])
+            native.local_repository(
+                name = repo['name'],
+                path = path
+            )
+        else:
+            print("Generating Git repo for {} using branch {}".format(repo_name, branch))
+            git_repository(
+                name=repo['name'], 
+                remote=repo['remote'],
+                branch=branch
+            )
